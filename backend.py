@@ -7,6 +7,10 @@ import tempfile
 import threading
 import time
 
+# Global variable to store progress
+progress = [0]
+time_spent = [0]
+
 def flac_to_opus(input_file, output_file, bitrate_mode, bitrate, tune):
     # Load FLAC file
     audio = AudioSegment.from_file(input_file, format="flac")
@@ -83,7 +87,6 @@ def copy_cover(input_file, output_file):
             return
 
 def batch_convert_folder(input_folder, output_folder, encoder_settings):
-    
     # Extract Opus encoder settings
     bitrate_mode = encoder_settings.get("bitrate_mode")
     bitrate = int(encoder_settings.get("bitrate"))
@@ -99,23 +102,33 @@ def batch_convert_folder(input_folder, output_folder, encoder_settings):
             if file.lower().endswith(".flac"):
                 flac_files.append(os.path.join(root, file))
                 
+    # Track progress and measure conversion time
+    completed_tasks = 0
+    total_tasks = len(flac_files)
+    start_time = time.time()
+                
     # Define a function to convert a single FLAC file to OPUS
     def convert_file(input_file, output_folder):
         output_file = os.path.join(output_folder, os.path.basename(input_file).replace(".flac", ".opus"))
         flac_to_opus(input_file, output_file, bitrate_mode, bitrate, tune)     
         copy_tags(input_file, output_file)
-        copy_cover(input_file, output_file)    
-        progress_callback(input_file)
+        copy_cover(input_file, output_file)
+        progress_callback()
+        
+        def update_time_spent():
+            nonlocal completed_tasks
+            elapsed_time = time.time() - start_time
+            time_spent[0] = elapsed_time
+            if completed_tasks < total_tasks:
+                time.sleep(0.1)  # Update every 1 second
+                update_time_spent()
+
+        update_time_spent()
     
-    # Track progress and measure conversion time
-    completed_tasks = 0
-    total_tasks = len(flac_files)
-    start_time = time.time()
-    def progress_callback(input_file):
+    def progress_callback():
         nonlocal completed_tasks
         completed_tasks += 1
-        progress = completed_tasks / total_tasks * 100
-        print(f"Conversion progress: {progress:.2f}%")
+        progress[0] = completed_tasks / total_tasks * 100
         
     # Convert each file using a separate thread
     threads = []
@@ -128,7 +141,5 @@ def batch_convert_folder(input_folder, output_folder, encoder_settings):
     for thread in threads:
         thread.join()
     
-    # Calculate conversion time
-    end_time = time.time()
-    conversion_time = end_time - start_time
-    print(f"Batch conversion completed in {conversion_time:.2f} seconds.")
+def get_progress():
+    return progress[0], time_spent[0]

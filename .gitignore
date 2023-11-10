@@ -8,3 +8,4 @@ gui.spec
 gui.exe
 gui.rc
 *.ico
+py_flac_to_opus.spec
