@@ -91,7 +91,7 @@ def batch_convert_folder(input_folder, output_folder, encoder_settings):
     bitrate_mode = encoder_settings.get("bitrate_mode")
     bitrate = int(encoder_settings.get("bitrate"))
     tune = encoder_settings.get("tune")
-    
+
     # Create output folder if it doesn't exist
     os.makedirs(output_folder, exist_ok=True)
 

@@ -132,9 +132,10 @@ def create_gui():
     tune_label = ttk.Label(opus_settings_frame, text="Tune low bitrates for:")
     tune_label.pack(anchor="w", pady=5)
     tune_var = tk.StringVar(value="Auto")  # Default selection is Auto
-    tune_dropdown = ttk.OptionMenu(opus_settings_frame, tune_var, "Auto", "Music", "Speech")
+    tune_options = ["Auto", "Music", "Speech"]
+    tune_dropdown = ttk.OptionMenu(opus_settings_frame, tune_var, tune_var.get(), *tune_options)
     tune_dropdown.pack(anchor="w")
-    
+
     # Progress bar
     progress_bar = ttk.Progressbar(progress_section, length=200, mode="determinate")
     progress_bar.grid(row=0, column=0, padx=10, pady=10)
