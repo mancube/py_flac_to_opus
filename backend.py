@@ -10,7 +10,6 @@ import time
 def flac_to_opus(input_file, output_file, bitrate_mode, bitrate, tune):
     # Load FLAC file
     audio = AudioSegment.from_file(input_file, format="flac")
-    
     # Set Opus encoder options
     encoder_options = [
         "-c:a", "libopus",
@@ -87,10 +86,8 @@ def batch_convert_folder(input_folder, output_folder, encoder_settings):
     
     # Extract Opus encoder settings
     bitrate_mode = encoder_settings.get("bitrate_mode")
-    bitrate = encoder_settings.get("bitrate")
+    bitrate = int(encoder_settings.get("bitrate"))
     tune = encoder_settings.get("tune")
-    
-    print(bitrate_mode, bitrate, tune)
     
     # Create output folder if it doesn't exist
     os.makedirs(output_folder, exist_ok=True)
