@@ -21,3 +21,10 @@ python gui.py
 ```
 
 If running the executable, the icon.ico is necessary in the root folder for the executable to run as intended.
+
+# Screenshots
+![Imgur](https://i.imgur.com/zunc6to.png)
+
+The basic user interface, with the options to choose the input and output folders, for batch processing.
+
+Using Tkinter's TTK libraries for theming purposes.
