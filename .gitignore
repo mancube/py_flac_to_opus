@@ -7,5 +7,5 @@ config.json
 gui.spec
 gui.exe
 gui.rc
-*.ico
+icon_small.ico
 py_flac_to_opus.spec
