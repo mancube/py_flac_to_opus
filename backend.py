@@ -11,6 +11,9 @@ import time
 progress = [0]
 time_spent = [0]
 
+# ffmpeg path
+AudioSegment.converter = f"ffmpeg.exe"
+
 def flac_to_opus(input_file, output_file, bitrate_mode, bitrate, tune):
     # Load FLAC file
     audio = AudioSegment.from_file(input_file, format="flac")
