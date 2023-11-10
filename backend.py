@@ -1,25 +1,23 @@
 from pydub import AudioSegment
 import os
+import io
 import shutil
 import mutagen
 import tempfile
+import threading
+import time
 
 def flac_to_opus(input_file, output_file):
     # Load FLAC file
     audio = AudioSegment.from_file(input_file, format="flac")
-
-    # Export as temporary WAV file
-    temp_wav_file = os.path.join(tempfile.gettempdir(), "temp.wav")
-    audio.export(temp_wav_file, format="wav")
-
-    # Load temporary WAV file
-    wav_audio = AudioSegment.from_file(temp_wav_file, format="wav")
-
-    # Export as OPUS file
-    wav_audio.export(output_file, format="opus")
-
-    # Remove temporary WAV file
-    os.remove(temp_wav_file)
+    # Export as OPUS file in memory
+    output_stream = io.BytesIO()
+    audio.export(output_stream, format="opus")
+    # Set the stream position to the beginning
+    output_stream.seek(0)
+    # Write the OPUS data to the output file
+    with open(output_file, "wb") as f:
+        f.write(output_stream.read())
 
 def copy_tags(input_file, output_file):
     # Load FLAC tags
@@ -67,12 +65,6 @@ def copy_cover(input_file, output_file):
             # Copy the cover file to the output directory
             shutil.copy(cover_file, os.path.dirname(output_file))
             return
-        
-def convert_file(input_file, output_folder):
-    output_file = os.path.join(output_folder, os.path.basename(input_file).replace(".flac", ".opus"))
-    flac_to_opus(input_file, output_file)
-    copy_tags(input_file, output_file)
-    copy_cover(input_file, output_file)
 
 def batch_convert_folder(input_folder, output_folder):
     # Create output folder if it doesn't exist
@@ -84,8 +76,37 @@ def batch_convert_folder(input_folder, output_folder):
         for file in files:
             if file.lower().endswith(".flac"):
                 flac_files.append(os.path.join(root, file))
-
-    # Convert each FLAC file to OPUS
+                
+    # Define a function to convert a single FLAC file to OPUS
+    def convert_file(input_file, output_folder):
+        output_file = os.path.join(output_folder, os.path.basename(input_file).replace(".flac", ".opus"))
+        flac_to_opus(input_file, output_file)     
+        copy_tags(input_file, output_file)
+        copy_cover(input_file, output_file)    
+        progress_callback(input_file)
+    
+    # Track progress and measure conversion time
+    completed_tasks = 0
+    total_tasks = len(flac_files)
+    start_time = time.time()
+    def progress_callback(input_file):
+        nonlocal completed_tasks
+        completed_tasks += 1
+        progress = completed_tasks / total_tasks * 100
+        print(f"Conversion progress: {progress:.2f}%")
+        
+    # Convert each file using a separate thread
+    threads = []
     for file in flac_files:
-        convert_file(file, output_folder)
-    print("Batch conversion completed.")
+        thread = threading.Thread(target=convert_file, args=(file, output_folder))
+        thread.start()
+        threads.append(thread)
+
+    # Wait for all threads to complete
+    for thread in threads:
+        thread.join()
+    
+    # Calculate conversion time
+    end_time = time.time()
+    conversion_time = end_time - start_time
+    print(f"Batch conversion completed in {conversion_time:.2f} seconds.")
