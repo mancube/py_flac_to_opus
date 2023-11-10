@@ -7,12 +7,29 @@ import tempfile
 import threading
 import time
 
-def flac_to_opus(input_file, output_file):
+def flac_to_opus(input_file, output_file, bitrate_mode, bitrate, tune):
     # Load FLAC file
     audio = AudioSegment.from_file(input_file, format="flac")
+    
+    # Set Opus encoder options
+    encoder_options = [
+        "-c:a", "libopus",
+        "-b:a", f"{bitrate}k",  # Convert bitrate from kilobits to bits
+    ]
+    if tune == "Music":
+        encoder_options.extend(["-application", "audio"])
+    elif tune == "Speech":
+        encoder_options.extend(["-application", "voip"])
+    if bitrate_mode == "hard-cbr":
+        encoder_options.extend(["-compression_level", "10"])
+    elif bitrate_mode == "vbr":
+        encoder_options.extend(["-vbr", "on"])
+    elif bitrate_mode == "cvbr":
+        encoder_options.extend(["-vbr", "constrained"])
+
     # Export as OPUS file in memory
     output_stream = io.BytesIO()
-    audio.export(output_stream, format="opus")
+    audio.export(output_stream, format="opus", parameters=encoder_options) 
     # Set the stream position to the beginning
     output_stream.seek(0)
     # Write the OPUS data to the output file
@@ -66,7 +83,15 @@ def copy_cover(input_file, output_file):
             shutil.copy(cover_file, os.path.dirname(output_file))
             return
 
-def batch_convert_folder(input_folder, output_folder):
+def batch_convert_folder(input_folder, output_folder, encoder_settings):
+    
+    # Extract Opus encoder settings
+    bitrate_mode = encoder_settings.get("bitrate_mode")
+    bitrate = encoder_settings.get("bitrate")
+    tune = encoder_settings.get("tune")
+    
+    print(bitrate_mode, bitrate, tune)
+    
     # Create output folder if it doesn't exist
     os.makedirs(output_folder, exist_ok=True)
 
@@ -80,7 +105,7 @@ def batch_convert_folder(input_folder, output_folder):
     # Define a function to convert a single FLAC file to OPUS
     def convert_file(input_file, output_folder):
         output_file = os.path.join(output_folder, os.path.basename(input_file).replace(".flac", ".opus"))
-        flac_to_opus(input_file, output_file)     
+        flac_to_opus(input_file, output_file, bitrate_mode, bitrate, tune)     
         copy_tags(input_file, output_file)
         copy_cover(input_file, output_file)    
         progress_callback(input_file)
