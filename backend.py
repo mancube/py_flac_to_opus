@@ -12,7 +12,10 @@ progress = [0]
 time_spent = [0]
 
 # ffmpeg path
-AudioSegment.converter = f"ffmpeg.exe"
+ffmpeg_path = shutil.which("ffmpeg")
+if ffmpeg_path is None:
+    ffmpeg_path = os.path.join(os.path.dirname(__file__), "ffmpeg.exe")
+AudioSegment.converter = ffmpeg_path
 
 def flac_to_opus(input_file, output_file, bitrate_mode, bitrate, tune):
     # Load FLAC file
