@@ -6,7 +6,9 @@ Written in Python, GUI done in Tkinter.
 Needs a <b>ffmpeg</b> install accessible via PATH enviroment variables.
 
 Needed imports are listed in the requirements.txt file, can be installed via:
-> pip install -r requirements.txt
+```
+pip install -r requirements.txt
+```
 
 # Releases
 The release contains a zip file with the executable created via Pyinstaller, and the basic config.json file.
