@@ -1,3 +1,4 @@
+<img src='logo.png' width='150'></img>
 # py_flac_to_opus
 Audio converter for converting FLAC to OPUS files.
 Written in Python, GUI done in Tkinter.
