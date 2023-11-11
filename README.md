@@ -21,6 +21,7 @@ python gui.py
 ```
 
 ~~If running the executable, the icon.ico is necessary in the root folder for the executable to run as intended.~~
+
 From the v1.1 version onward, the icon is provided via a different method, so the icon.ico isn't needed anymore.
 
 # Screenshots
