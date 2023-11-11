@@ -1,7 +1,7 @@
 <img src='https://i.imgur.com/Dk1BtAg.png' width='150'></img>
 # py_flac_to_opus
 Audio converter for converting FLAC to OPUS files.
-Written in Python, GUI done in Tkinter.
+Written fully in Python, GUI done in TKinter.
 
 # Requirements
 Needs a **ffmpeg** install accessible, either via *PATH enviroment variables* or provide the **ffmpeg** executable *yourself* in the same folder as the source.
