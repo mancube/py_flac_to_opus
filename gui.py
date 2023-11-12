@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
+from tkinter import *
 import sv_ttk
 from tkinter import filedialog
 import json
@@ -30,6 +31,21 @@ def choose_output_folder(entry):
     entry.insert(0, folder)
 
 def convert_button_click(input_folder, output_folder, bitrate_mode_var, bitrate_slider, tune_var):
+    # Check if input and output folders are selected
+    missing_folders = []
+    if not input_folder and not output_folder:
+        missing_folders.append("Input and Output")
+    else:
+        if not input_folder:
+            missing_folders.append("Input")
+        if not output_folder:
+            missing_folders.append("Output")
+
+    if missing_folders:
+        for folder in missing_folders:
+            tk.messagebox.showwarning("Warning", f"Please select {folder} folder.")
+        return
+    
     # Get Opus encoder settings
     bitrate_mode = bitrate_mode_var.get()
     bitrate = bitrate_slider.get()
@@ -46,6 +62,8 @@ def convert_button_click(input_folder, output_folder, bitrate_mode_var, bitrate_
     # Create a separate thread for the conversion process
     conversion_thread = threading.Thread(target=conversion_thread)
     conversion_thread.start()
+
+# region: Config handling
     
 def load_config():
     try:
@@ -63,14 +81,15 @@ def save_config(config):
     with open(CONFIG_FILE, "w") as config_file:
         json.dump(config, config_file)
 
+# endregion
+
 def create_gui():
     config = load_config()
     root = tk.Tk()
     root.title("FLAC to OPUS Converter")
     
     # Decode the Base64 string and create an Image object
-    icon_data = base64.b64decode(icon_base64)
-    image = Image.open(io.BytesIO(icon_data))
+    image = Image.open(io.BytesIO(base64.b64decode(icon_base64)))
 
     root.iconphoto(True, ImageTk.PhotoImage(image))
     sv_ttk.set_theme("dark")
@@ -112,44 +131,27 @@ def create_gui():
     # Bitrate mode management radio buttons
     bitrate_mode_var = tk.StringVar(value="vbr")  # Default selection is VBR
     vbr_radio = ttk.Radiobutton(opus_settings_frame, text="VBR", variable=bitrate_mode_var, value="vbr")
-    vbr_radio.pack(anchor="w")
+    vbr_radio.pack(anchor="nw")
     cvbr_radio = ttk.Radiobutton(opus_settings_frame, text="Constrained VBR", variable=bitrate_mode_var, value="cvbr")
-    cvbr_radio.pack(anchor="w")
+    cvbr_radio.pack(anchor="nw")
     cbr_radio = ttk.Radiobutton(opus_settings_frame, text="CBR", variable=bitrate_mode_var, value="hard-cbr")
-    cbr_radio.pack(anchor="w")
-
-    def on_scale_change(event):
-        value = int(bitrate_slider.get())
-        step = 8  # Set the desired step size
-        adjusted_value = round(value / step) * step
-        if adjusted_value > 503:
-            adjusted_value = 512
-        elif adjusted_value < 16:
-            adjusted_value = 8
-        if adjusted_value != value:
-            bitrate_slider.set(adjusted_value)
-            bitrate_value_label.config(text=str(int(bitrate_slider.get())) + " kbps")
+    cbr_radio.pack(anchor="nw")
 
     # Bitrate slider
     bitrate_label = ttk.Label(opus_settings_frame, text="Bitrate (kbps):")
-    bitrate_label.pack(anchor="w", pady=5)
+    bitrate_label.pack(anchor="c", pady=5)
     
-    bitrate_slider = ttk.Scale(opus_settings_frame, from_=8, to=512, orient=tk.HORIZONTAL, length=100)
+    bitrate_slider = tk.Scale(opus_settings_frame, from_=8, to=512, resolution=8, orient=tk.HORIZONTAL, length=150)
     bitrate_slider.set(128)  # Default bitrate value
-    bitrate_slider.configure(command=on_scale_change)
-    bitrate_slider.pack(anchor="w")
-
-    # Bitrate value label
-    bitrate_value_label = ttk.Label(opus_settings_frame, text="128 kbps")
-    bitrate_value_label.pack(anchor="w")
+    bitrate_slider.pack(anchor="c")
 
     # Tune low bitrates dropdown menu
     tune_label = ttk.Label(opus_settings_frame, text="Tune low bitrates for:")
-    tune_label.pack(anchor="w", pady=5)
+    tune_label.pack(anchor="c", pady=5)
     tune_var = tk.StringVar(value="Auto")  # Default selection is Auto
     tune_options = ["Auto", "Music", "Speech"]
     tune_dropdown = ttk.OptionMenu(opus_settings_frame, tune_var, tune_var.get(), *tune_options)
-    tune_dropdown.pack(anchor="w")
+    tune_dropdown.pack(anchor="c")
 
     # Progress bar
     progress_bar = ttk.Progressbar(progress_section, length=200, mode="determinate")
