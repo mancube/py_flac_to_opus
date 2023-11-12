@@ -87,6 +87,7 @@ def create_gui():
     config = load_config()
     root = tk.Tk()
     root.title("FLAC to OPUS Converter")
+    root.minsize(625, 515)
     
     # Decode the Base64 string and create an Image object
     image = Image.open(io.BytesIO(base64.b64decode(icon_base64)))
@@ -94,11 +95,18 @@ def create_gui():
     root.iconphoto(True, ImageTk.PhotoImage(image))
     sv_ttk.set_theme("dark")
     
+    # Configure row and column resizing
+    root.grid_rowconfigure(0, weight=1)
+    root.grid_rowconfigure(1, weight=1)
+    root.grid_columnconfigure(0, weight=1)
+    root.grid_columnconfigure(1, weight=1)
+    
     # region: Sectioning
 
     # IO section
     io_section = ttk.LabelFrame(root, text="Input/Output", padding=10)
-    io_section.grid(row=0, column=0, columnspan=2, padx=10, pady=10)
+    io_section.grid(row=0, column=0, columnspan=2, padx=10, pady=10, sticky="nsew")
+    io_section.grid_columnconfigure(1, weight=1)
 
     # Opus encoder settings section
     opus_settings_frame = ttk.LabelFrame(root, text="Opus Encoder Settings", padding=10)
@@ -116,17 +124,17 @@ def create_gui():
     input_folder_label = ttk.Label(io_section, text="Input Folder:")
     input_folder_label.grid(row=0, column=0, padx=10, pady=5)
     input_folder_entry = ttk.Entry(io_section, width=40)
-    input_folder_entry.grid(row=0, column=1, padx=5, pady=5)
+    input_folder_entry.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
     input_folder_button = ttk.Button(io_section, text="Choose Folder", command=lambda: choose_input_folder(input_folder_entry))
-    input_folder_button.grid(row=0, column=2, padx=5, pady=5)
+    input_folder_button.grid(row=0, column=2, padx=5, pady=5, sticky="ew")
 
     # Output folder selection
     output_folder_label = ttk.Label(io_section, text="Output Folder:")
     output_folder_label.grid(row=1, column=0, padx=10, pady=5)
     output_folder_entry = ttk.Entry(io_section, width=40)
-    output_folder_entry.grid(row=1, column=1, padx=5, pady=5)
+    output_folder_entry.grid(row=1, column=1, padx=5, pady=5, sticky="ew")
     output_folder_button = ttk.Button(io_section, text="Choose Folder", command=lambda: choose_output_folder(output_folder_entry))
-    output_folder_button.grid(row=1, column=2, padx=5, pady=5)
+    output_folder_button.grid(row=1, column=2, padx=5, pady=5, sticky="ew")
 
     # Bitrate mode management radio buttons
     bitrate_mode_var = tk.StringVar(value="vbr")  # Default selection is VBR
@@ -143,7 +151,7 @@ def create_gui():
     
     bitrate_slider = tk.Scale(opus_settings_frame, from_=8, to=512, resolution=8, orient=tk.HORIZONTAL, length=150)
     bitrate_slider.set(128)  # Default bitrate value
-    bitrate_slider.pack(anchor="c")
+    bitrate_slider.pack(anchor="c", fill="x", padx=10)
 
     # Tune low bitrates dropdown menu
     tune_label = ttk.Label(opus_settings_frame, text="Tune low bitrates for:")
@@ -151,12 +159,12 @@ def create_gui():
     tune_var = tk.StringVar(value="Auto")  # Default selection is Auto
     tune_options = ["Auto", "Music", "Speech"]
     tune_dropdown = ttk.OptionMenu(opus_settings_frame, tune_var, tune_var.get(), *tune_options)
-    tune_dropdown.pack(anchor="c")
+    tune_dropdown.pack(anchor="c", fill="x", padx=10)
 
     # Progress bar
-    progress_bar = ttk.Progressbar(progress_section, length=200, mode="determinate")
+    progress_bar = ttk.Progressbar(progress_section, mode="determinate")
     progress_bar.grid(row=0, column=0, padx=10, pady=10)
-    progress_bar.pack(pady=5)
+    progress_bar.pack(fill="x", padx=10)
 
     # Progress label
     progress_label = ttk.Label(progress_section, text="0%")
@@ -206,7 +214,7 @@ def create_gui():
         output_folder_entry.insert(0, config["output_folder"])
 
     convert_button = ttk.Button(root, text="Convert", command=convert_button_click_wrapper)
-    convert_button.grid(row=3, column=0, columnspan=3, pady=10)
+    convert_button.grid(row=3, column=0, columnspan=2, pady=10, padx=10, sticky="we")
     
     root.mainloop()
 
