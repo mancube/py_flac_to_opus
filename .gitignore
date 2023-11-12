@@ -1,4 +1,4 @@
-/.venv
+/.conda
 /.vscode
 /__pycache__
 config.json
@@ -10,3 +10,5 @@ gui.rc
 icon_small.ico
 py_flac_to_opus.spec
 build_exe.bat
+ffmpeg.exe
+build_exe_ffmpeg.bat
