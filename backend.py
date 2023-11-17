@@ -46,36 +46,36 @@ def flac_to_opus(input_file, output_file, bitrate_mode, bitrate, tune):
         f.write(output_stream.read())
 
 def copy_tags(input_file, output_file):
-    # Load FLAC tags
-    flac_tags = mutagen.File(input_file)
-    if flac_tags is None:
+    # Load input tags
+    input_tags = mutagen.File(input_file)
+    if input_tags is None:
         return
     
-    # Copy FLAC tags to OPUS file
-    opus_tags = mutagen.File(output_file, easy=True)
-    if opus_tags is None:
+    # Copy input tags to OPUS file
+    output_tags = mutagen.File(output_file, easy=True)
+    if output_tags is None:
         return
     
     # Exclude the "LYRICS" tag
-    if "LYRICS" in flac_tags:
-        del flac_tags["LYRICS"]
-    elif "lyrics" in flac_tags:
-        del flac_tags["lyrics"]
+    if "LYRICS" in input_tags:
+        del input_tags["LYRICS"]
+    elif "lyrics" in input_tags:
+        del input_tags["lyrics"]
     
-    opus_tags.clear()
-    opus_tags.update(flac_tags)
-    opus_tags.save()
+    output_tags.clear()
+    output_tags.update(input_tags)
+    output_tags.save()
 
 def copy_cover(input_file, output_file):
-    # Load FLAC cover
-    flac_tags = mutagen.File(input_file)
-    flac_cover = flac_tags.tags.get("APIC:")
+    # Load cover
+    input_tags = mutagen.File(input_file)
+    input_cover = input_tags.tags.get("APIC:")
     
-    if flac_cover:
-        # Save FLAC cover as a temporary image file
+    if input_cover:
+        # Save cover as a temporary image file
         temp_cover_file = os.path.join(tempfile.gettempdir(), "temp_cover.jpg")
         with open(temp_cover_file, "wb") as f:
-            f.write(flac_cover.data)
+            f.write(input_cover.data)
 
         # Copy the temporary cover to the output directory
         shutil.copy(temp_cover_file, os.path.dirname(output_file))
@@ -108,19 +108,19 @@ def batch_convert_folder(input_folder, output_folder, encoder_settings, rem_src_
     # Create output folder if it doesn't exist
     os.makedirs(output_folder, exist_ok=True)
 
-    # Iterate through all FLAC files in the input folder
-    flac_files = []
+    # Iterate through all audio files in the input folder
+    audio_files = []
     for root, dirs, files in os.walk(input_folder):
         for file in files:
             if file.lower().endswith(".flac"):
-                flac_files.append(os.path.join(root, file))
+                audio_files.append(os.path.join(root, file))
                 
     # Track progress and measure conversion time
     completed_tasks = 0
-    total_tasks = len(flac_files)
+    total_tasks = len(audio_files)
     start_time = time.time()
                 
-    # Define a function to convert a single FLAC file to OPUS
+    # Define a function to convert a single audio file
     def convert_file(input_file, output_folder):
         output_file = os.path.join(output_folder, os.path.basename(input_file).replace(".flac", ".opus"))
         flac_to_opus(input_file, output_file, bitrate_mode, bitrate, tune)     
@@ -150,7 +150,7 @@ def batch_convert_folder(input_folder, output_folder, encoder_settings, rem_src_
         
     # Convert each file using a separate thread
     threads = []
-    for file in flac_files:
+    for file in audio_files:
         thread = threading.Thread(target=convert_file, args=(file, output_folder))
         thread.start()
         threads.append(thread)

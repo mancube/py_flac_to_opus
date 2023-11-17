@@ -44,6 +44,8 @@ def convert_button_click(input_folder_entry, output_folder_entry, use_same_folde
     # Get IO settings and handle them
     if use_same_folder_var.get():
         output_folder = input_folder
+        output_folder_entry.delete(0, tk.END)
+        output_folder_entry.insert(0, input_folder_entry.get())
     
     # Check if input and output folders are selected
     if not input_folder:
@@ -64,8 +66,11 @@ def convert_button_click(input_folder_entry, output_folder_entry, use_same_folde
     }
     
     def conversion_thread():
-        batch_convert_folder(input_folder, output_folder, encoder_settings, rem_src_files_var)
-        tk.messagebox.showinfo("Conversion Complete", "FLAC to OPUS conversion is complete.")
+        try:
+            batch_convert_folder(input_folder, output_folder, encoder_settings, rem_src_files_var)
+            tk.messagebox.showinfo("Conversion Complete", "FLAC to OPUS conversion is complete.")
+        except ValueError as e:
+            tk.messagebox.showerror("Error", str(e))
     # Create a separate thread for the conversion process
     conversion_thread = threading.Thread(target=conversion_thread)
     conversion_thread.start()
@@ -171,6 +176,9 @@ def create_gui():
         config["output_folder"] = output_folder_entry.get()
         config["use_same_folder"] = use_same_folder_var.get()
         config["rem_src_files"] = rem_src_files_var.get()
+        config["bitrate_mode"] = bitrate_mode_var.get()
+        config["bitrate"] = bitrate_slider.get()
+        config["tune"] = tune_var.get()
         save_config_file(config)
         
     def convert_button_click_wrapper():
@@ -184,16 +192,17 @@ def create_gui():
         if "input_folder" in config:
             input_folder_entry.insert(0, config["input_folder"])
         if "output_folder" in config:
-            output_folder = config["output_folder"]
-            if output_folder == "":
-                use_same_folder_var.set(True)
-            else:
-                use_same_folder_var.set(False)
-                output_folder_entry.insert(0, output_folder)
+            output_folder_entry.insert(0, config["output_folder"])
         if "use_same_folder" in config:
             use_same_folder_var.set(config["use_same_folder"])
         if "rem_src_files" in config:
             rem_src_files_var.set(config["rem_src_files"])
+        if "bitrate_mode" in config:
+            bitrate_mode_var.set(config["bitrate_mode"])
+        if "bitrate" in config:
+            bitrate_slider.set(config["bitrate"])
+        if "tune" in config:
+            tune_var.set(config["tune"])
             
     # Update input folder label and hide output folder GUI elements when checkbox is checked
     def update_folder_gui():
