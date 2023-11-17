@@ -94,6 +94,7 @@ def create_gui():
     config = load_config_file()
     root = tk.Tk()
     root.title("FLAC to OPUS Converter")
+    root.minsize(630, 630)
     
     # Decode the Base64 string and create an Image object
     image = Image.open(io.BytesIO(base64.b64decode(icon_base64)))
@@ -105,7 +106,7 @@ def create_gui():
 
     # IO section
     io_section = ttk.LabelFrame(root, text="Input/Output", padding=10)
-    io_section.grid(row=0, column=0, columnspan=2, padx=10, pady=10)
+    io_section.grid(row=0, column=0, columnspan=2, padx=10, pady=10, sticky="nsew")
     
     # IO Configuration section
     io_config_section = ttk.LabelFrame(io_section, text="I/O Behaviour Configuration", padding=10)
@@ -118,6 +119,32 @@ def create_gui():
     # Progress section
     progress_section = ttk.LabelFrame(root, text="Converting Progress", padding=10)
     progress_section.grid(row=1, column=1, padx=10, pady=10, sticky="nsew")
+    
+    # endregion
+    
+    # region: Grid resizing
+    
+    # Configure root grid resizing
+    root.grid_columnconfigure(0, weight=1)
+    root.grid_columnconfigure(1, weight=1)
+    root.grid_rowconfigure(0, weight=1)
+    root.grid_rowconfigure(1, weight=1)    
+    # Configure grid resizing for IO section
+    io_section.grid_columnconfigure(1, weight=1)
+    io_section.grid_columnconfigure(2, weight=1)
+    io_section.grid_rowconfigure(0, weight=1)
+    io_section.grid_rowconfigure(1, weight=1)
+    io_section.grid_rowconfigure(2, weight=1)
+    # Configure grid resizing for IO config section
+    io_config_section.grid_columnconfigure(0, weight=1)
+    io_config_section.grid_rowconfigure(0, weight=1)
+    io_config_section.grid_rowconfigure(1, weight=1)
+    # Configure grid resizing for Opus encoder settings section
+    opus_settings_frame.grid_columnconfigure(0, weight=1)
+    opus_settings_frame.grid_rowconfigure(0, weight=1)
+    # Configure grid resizing for Progress section
+    progress_section.grid_columnconfigure(0, weight=1)
+    progress_section.grid_rowconfigure(0, weight=1)
     
     # endregion
     
@@ -197,21 +224,21 @@ def create_gui():
 
     # Input folder selection
     input_folder_label = ttk.Label(io_section, text="Input Folder:")
-    input_folder_label.grid(row=1, column=0, padx=10, pady=5)
-    input_folder_entry = ttk.Entry(io_section, width=40)
-    input_folder_entry.grid(row=1, column=1, padx=5, pady=5)
+    input_folder_label.grid(row=1, column=0, padx=5, pady=5, sticky="w")
+    input_folder_entry = ttk.Entry(io_section)
+    input_folder_entry.grid(row=1, column=1, padx=5, pady=5, sticky="ew")
     input_folder_button = ttk.Button(io_section, text="Choose Folder", 
                                     command=lambda: choose_input_folder(input_folder_entry))
-    input_folder_button.grid(row=1, column=2, padx=5, pady=5)
+    input_folder_button.grid(row=1, column=2, padx=5, pady=5, sticky="ew")
 
     # Output folder selection
     output_folder_label = ttk.Label(io_section, text="Output Folder:")
-    output_folder_label.grid(row=2, column=0, padx=10, pady=5)
-    output_folder_entry = ttk.Entry(io_section, width=40)
-    output_folder_entry.grid(row=2, column=1, padx=5, pady=5)
+    output_folder_label.grid(row=2, column=0, padx=5, pady=5, sticky="w")
+    output_folder_entry = ttk.Entry(io_section)
+    output_folder_entry.grid(row=2, column=1, padx=5, pady=5, sticky="ew")
     output_folder_button = ttk.Button(io_section, text="Choose Folder", 
                                     command=lambda: choose_output_folder(output_folder_entry, input_folder_entry, use_same_folder_var))
-    output_folder_button.grid(row=2, column=2, padx=5, pady=5)
+    output_folder_button.grid(row=2, column=2, padx=5, pady=5, sticky="ew")
 
     use_same_folder_var.trace("w", lambda *args: update_folder_gui())
 
@@ -241,9 +268,9 @@ def create_gui():
     tune_dropdown.pack(anchor="c")
 
     # Progress bar
-    progress_bar = ttk.Progressbar(progress_section, length=200, mode="determinate")
-    progress_bar.grid(row=0, column=0, padx=10, pady=10)
-    progress_bar.pack(pady=5)
+    progress_bar = ttk.Progressbar(progress_section, mode="determinate")
+    progress_bar.grid(row=0, column=0, padx=15, pady=15)
+    progress_bar.pack(fill="x",pady=5)
 
     # Progress label
     progress_label = ttk.Label(progress_section, text="0%")
@@ -259,7 +286,7 @@ def create_gui():
     
     # Convert button
     convert_button = ttk.Button(root, text="Convert", command=convert_button_click_wrapper)
-    convert_button.grid(row=3, column=0, columnspan=3, pady=10)
+    convert_button.grid(row=3, column=0, columnspan=3, padx=10, pady=10, sticky="nsew")
     
     # endregion
     
