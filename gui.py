@@ -21,29 +21,36 @@ Qk02wAAAAAAAADYAAAAoAAAAgAAAAIAAAAABABgAAAAAAAAAAAASCwAAEgsAAAAAAAAAAAAAAwMDAwMD
 # endregion
 
 def choose_input_folder(entry):
-    folder = filedialog.askdirectory()
-    entry.delete(0, tk.END)
-    entry.insert(0, folder)
+    folder_selected = filedialog.askdirectory()
+    if folder_selected:
+        entry.delete(0, tk.END)
+        entry.insert(0, folder_selected)
 
-def choose_output_folder(entry):
-    folder = filedialog.askdirectory()
-    entry.delete(0, tk.END)
-    entry.insert(0, folder)
-
-def convert_button_click(input_folder, output_folder, bitrate_mode_var, bitrate_slider, tune_var):
-    # Check if input and output folders are selected
-    missing_folders = []
-    if not input_folder and not output_folder:
-        missing_folders.append("Input and Output")
+def choose_output_folder(entry, input_folder_entry, use_same_folder_var):
+    if use_same_folder_var.get():
+        folder = input_folder_entry.get()
+        entry.delete(0, tk.END)
+        entry.insert(0, folder)
     else:
-        if not input_folder:
-            missing_folders.append("Input")
-        if not output_folder:
-            missing_folders.append("Output")
+        folder_selected = filedialog.askdirectory()
+        entry.delete(0, tk.END)
+        entry.insert(0, folder_selected)
 
-    if missing_folders:
-        for folder in missing_folders:
-            tk.messagebox.showwarning("Warning", f"Please select {folder} folder.")
+def convert_button_click(input_folder_entry, output_folder_entry, use_same_folder_var, rem_src_files_var, bitrate_mode_var, bitrate_slider, tune_var):
+    # Check if input folder is selected
+    input_folder = input_folder_entry.get()
+    output_folder = output_folder_entry.get()
+    
+    # Get IO settings and handle them
+    if use_same_folder_var.get():
+        output_folder = input_folder
+    
+    # Check if input and output folders are selected
+    if not input_folder:
+        tk.messagebox.showwarning("Warning", "Please select an input folder.")
+        return
+    elif not output_folder:
+        tk.messagebox.showwarning("Warning", "Please select an output folder.")
         return
     
     # Get Opus encoder settings
@@ -57,7 +64,7 @@ def convert_button_click(input_folder, output_folder, bitrate_mode_var, bitrate_
     }
     
     def conversion_thread():
-        batch_convert_folder(input_folder, output_folder, encoder_settings)
+        batch_convert_folder(input_folder, output_folder, encoder_settings, rem_src_files_var)
         tk.messagebox.showinfo("Conversion Complete", "FLAC to OPUS conversion is complete.")
     # Create a separate thread for the conversion process
     conversion_thread = threading.Thread(target=conversion_thread)
@@ -65,7 +72,7 @@ def convert_button_click(input_folder, output_folder, bitrate_mode_var, bitrate_
 
 # region: Config handling
     
-def load_config():
+def load_config_file():
     try:
         with open(CONFIG_FILE, "r") as config_file:
             config = json.load(config_file)
@@ -77,17 +84,17 @@ def load_config():
             json.dump(config, config_file)
         return config
 
-def save_config(config):
+def save_config_file(config):
     with open(CONFIG_FILE, "w") as config_file:
         json.dump(config, config_file)
 
 # endregion
 
 def create_gui():
-    config = load_config()
+    config = load_config_file()
     root = tk.Tk()
     root.title("FLAC to OPUS Converter")
-    root.minsize(625, 515)
+    root.minsize(630, 630)
     
     # Decode the Base64 string and create an Image object
     image = Image.open(io.BytesIO(base64.b64decode(icon_base64)))
@@ -95,18 +102,15 @@ def create_gui():
     root.iconphoto(True, ImageTk.PhotoImage(image))
     sv_ttk.set_theme("dark")
     
-    # Configure row and column resizing
-    root.grid_rowconfigure(0, weight=1)
-    root.grid_rowconfigure(1, weight=1)
-    root.grid_columnconfigure(0, weight=1)
-    root.grid_columnconfigure(1, weight=1)
-    
     # region: Sectioning
 
     # IO section
     io_section = ttk.LabelFrame(root, text="Input/Output", padding=10)
     io_section.grid(row=0, column=0, columnspan=2, padx=10, pady=10, sticky="nsew")
-    io_section.grid_columnconfigure(1, weight=1)
+    
+    # IO Configuration section
+    io_config_section = ttk.LabelFrame(io_section, text="I/O Behaviour Configuration", padding=10)
+    io_config_section.grid(row=0, column=0, columnspan=3, pady=10, sticky="nsew")
 
     # Opus encoder settings section
     opus_settings_frame = ttk.LabelFrame(root, text="Opus Encoder Settings", padding=10)
@@ -118,67 +122,33 @@ def create_gui():
     
     # endregion
     
-    # region: GUI elements
-
-    # Input folder selection
-    input_folder_label = ttk.Label(io_section, text="Input Folder:")
-    input_folder_label.grid(row=0, column=0, padx=10, pady=5)
-    input_folder_entry = ttk.Entry(io_section, width=40)
-    input_folder_entry.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
-    input_folder_button = ttk.Button(io_section, text="Choose Folder", command=lambda: choose_input_folder(input_folder_entry))
-    input_folder_button.grid(row=0, column=2, padx=5, pady=5, sticky="ew")
-
-    # Output folder selection
-    output_folder_label = ttk.Label(io_section, text="Output Folder:")
-    output_folder_label.grid(row=1, column=0, padx=10, pady=5)
-    output_folder_entry = ttk.Entry(io_section, width=40)
-    output_folder_entry.grid(row=1, column=1, padx=5, pady=5, sticky="ew")
-    output_folder_button = ttk.Button(io_section, text="Choose Folder", command=lambda: choose_output_folder(output_folder_entry))
-    output_folder_button.grid(row=1, column=2, padx=5, pady=5, sticky="ew")
-
-    # Bitrate mode management radio buttons
-    bitrate_mode_var = tk.StringVar(value="vbr")  # Default selection is VBR
-    vbr_radio = ttk.Radiobutton(opus_settings_frame, text="VBR", variable=bitrate_mode_var, value="vbr")
-    vbr_radio.pack(anchor="nw")
-    cvbr_radio = ttk.Radiobutton(opus_settings_frame, text="Constrained VBR", variable=bitrate_mode_var, value="cvbr")
-    cvbr_radio.pack(anchor="nw")
-    cbr_radio = ttk.Radiobutton(opus_settings_frame, text="CBR", variable=bitrate_mode_var, value="hard-cbr")
-    cbr_radio.pack(anchor="nw")
-
-    # Bitrate slider
-    bitrate_label = ttk.Label(opus_settings_frame, text="Bitrate (kbps):")
-    bitrate_label.pack(anchor="c", pady=5)
+    # region: Grid resizing
     
-    bitrate_slider = tk.Scale(opus_settings_frame, from_=8, to=512, resolution=8, orient=tk.HORIZONTAL, length=150)
-    bitrate_slider.set(128)  # Default bitrate value
-    bitrate_slider.pack(anchor="c", fill="x", padx=10)
-
-    # Tune low bitrates dropdown menu
-    tune_label = ttk.Label(opus_settings_frame, text="Tune low bitrates for:")
-    tune_label.pack(anchor="c", pady=5)
-    tune_var = tk.StringVar(value="Auto")  # Default selection is Auto
-    tune_options = ["Auto", "Music", "Speech"]
-    tune_dropdown = ttk.OptionMenu(opus_settings_frame, tune_var, tune_var.get(), *tune_options)
-    tune_dropdown.pack(anchor="c", fill="x", padx=10)
-
-    # Progress bar
-    progress_bar = ttk.Progressbar(progress_section, mode="determinate")
-    progress_bar.grid(row=0, column=0, padx=10, pady=10)
-    progress_bar.pack(fill="x", padx=10)
-
-    # Progress label
-    progress_label = ttk.Label(progress_section, text="0%")
-    progress_label.pack()
-    
-    # Time spent label
-    time_label = ttk.Label(progress_section, text="Time Spent:")
-    time_label.pack(anchor="w", pady=5)
-
-    # Time spent value label
-    time_value_label = ttk.Label(progress_section, text="")
-    time_value_label.pack(anchor="w", pady=5)
+    # Configure root grid resizing
+    root.grid_columnconfigure(0, weight=1)
+    root.grid_columnconfigure(1, weight=1)
+    root.grid_rowconfigure(0, weight=1)
+    root.grid_rowconfigure(1, weight=1)    
+    # Configure grid resizing for IO section
+    io_section.grid_columnconfigure(1, weight=1)
+    io_section.grid_columnconfigure(2, weight=1)
+    io_section.grid_rowconfigure(0, weight=1)
+    io_section.grid_rowconfigure(1, weight=1)
+    io_section.grid_rowconfigure(2, weight=1)
+    # Configure grid resizing for IO config section
+    io_config_section.grid_columnconfigure(0, weight=1)
+    io_config_section.grid_rowconfigure(0, weight=1)
+    io_config_section.grid_rowconfigure(1, weight=1)
+    # Configure grid resizing for Opus encoder settings section
+    opus_settings_frame.grid_columnconfigure(0, weight=1)
+    opus_settings_frame.grid_rowconfigure(0, weight=1)
+    # Configure grid resizing for Progress section
+    progress_section.grid_columnconfigure(0, weight=1)
+    progress_section.grid_rowconfigure(0, weight=1)
     
     # endregion
+    
+    # region: GUI functions
     
     def update_progress(progress_bar, progress_label, time_value_label):
         progress, time_spent = get_progress()
@@ -196,25 +166,131 @@ def create_gui():
         progress_label["text"] = "0%"
         time_value_label["text"] = "0 seconds"
       
-    def save_folders():
+    def save_config():
         config["input_folder"] = input_folder_entry.get()
         config["output_folder"] = output_folder_entry.get()
-        save_config(config)
+        config["use_same_folder"] = use_same_folder_var.get()
+        config["rem_src_files"] = rem_src_files_var.get()
+        save_config_file(config)
         
     def convert_button_click_wrapper():
         reset_timer_and_progress(progress_bar, progress_label, time_value_label)
-        convert_button_click(input_folder_entry.get(), output_folder_entry.get(), bitrate_mode_var, bitrate_slider, tune_var)
+        convert_button_click(input_folder_entry, output_folder_entry, use_same_folder_var, rem_src_files_var,bitrate_mode_var, bitrate_slider, tune_var)
         update_progress(progress_bar, progress_label, time_value_label)
-        save_folders()
+        save_config()
         reset_timer_and_progress(progress_bar, progress_label, time_value_label)
 
-    if "input_folder" in config:
-        input_folder_entry.insert(0, config["input_folder"])
-    if "output_folder" in config:
-        output_folder_entry.insert(0, config["output_folder"])
+    def restore_config_values(config):
+        if "input_folder" in config:
+            input_folder_entry.insert(0, config["input_folder"])
+        if "output_folder" in config:
+            output_folder = config["output_folder"]
+            if output_folder == "":
+                use_same_folder_var.set(True)
+            else:
+                use_same_folder_var.set(False)
+                output_folder_entry.insert(0, output_folder)
+        if "use_same_folder" in config:
+            use_same_folder_var.set(config["use_same_folder"])
+        if "rem_src_files" in config:
+            rem_src_files_var.set(config["rem_src_files"])
+            
+    # Update input folder label and hide output folder GUI elements when checkbox is checked
+    def update_folder_gui():
+        if use_same_folder_var.get():
+            input_folder_label["text"] = "Input/Output Folder:"
+            output_folder_label.grid_remove()
+            output_folder_entry.grid_remove()
+            output_folder_button.grid_remove()
+        else:
+            input_folder_label["text"] = "Input Folder:"
+            output_folder_label.grid()
+            output_folder_entry.grid()
+            output_folder_button.grid()
+    
+    # endregion
+ 
+    # region: GUI elements
+    
+    # Use Same Folder toggle
+    use_same_folder_var = tk.BooleanVar(value=False)
+    use_same_folder_check = ttk.Checkbutton(io_config_section, text="Output files in the same directory as the input?", variable=use_same_folder_var)
+    use_same_folder_check.grid(row=0, column=0, columnspan=3, pady=5, sticky="nsew")
+    
+    # Use Same Folder toggle
+    rem_src_files_var = tk.BooleanVar(value=False)
+    rem_src_files_check = ttk.Checkbutton(io_config_section, text="Remove source files after conversion?", variable=rem_src_files_var)
+    rem_src_files_check.grid(row=1, column=0, columnspan=3, pady=5, sticky="nsew")
 
+    # Input folder selection
+    input_folder_label = ttk.Label(io_section, text="Input Folder:")
+    input_folder_label.grid(row=1, column=0, padx=5, pady=5, sticky="w")
+    input_folder_entry = ttk.Entry(io_section)
+    input_folder_entry.grid(row=1, column=1, padx=5, pady=5, sticky="ew")
+    input_folder_button = ttk.Button(io_section, text="Choose Folder", 
+                                    command=lambda: choose_input_folder(input_folder_entry))
+    input_folder_button.grid(row=1, column=2, padx=5, pady=5, sticky="ew")
+
+    # Output folder selection
+    output_folder_label = ttk.Label(io_section, text="Output Folder:")
+    output_folder_label.grid(row=2, column=0, padx=5, pady=5, sticky="w")
+    output_folder_entry = ttk.Entry(io_section)
+    output_folder_entry.grid(row=2, column=1, padx=5, pady=5, sticky="ew")
+    output_folder_button = ttk.Button(io_section, text="Choose Folder", 
+                                    command=lambda: choose_output_folder(output_folder_entry, input_folder_entry, use_same_folder_var))
+    output_folder_button.grid(row=2, column=2, padx=5, pady=5, sticky="ew")
+
+    use_same_folder_var.trace("w", lambda *args: update_folder_gui())
+
+    # Bitrate mode management radio buttons
+    bitrate_mode_var = tk.StringVar(value="vbr")  # Default selection is VBR
+    vbr_radio = ttk.Radiobutton(opus_settings_frame, text="VBR", variable=bitrate_mode_var, value="vbr")
+    vbr_radio.pack(anchor="nw")
+    cvbr_radio = ttk.Radiobutton(opus_settings_frame, text="Constrained VBR", variable=bitrate_mode_var, value="cvbr")
+    cvbr_radio.pack(anchor="nw")
+    cbr_radio = ttk.Radiobutton(opus_settings_frame, text="CBR", variable=bitrate_mode_var, value="hard-cbr")
+    cbr_radio.pack(anchor="nw")
+
+    # Bitrate slider
+    bitrate_label = ttk.Label(opus_settings_frame, text="Bitrate (kbps):")
+    bitrate_label.pack(anchor="c", pady=5)
+    
+    bitrate_slider = tk.Scale(opus_settings_frame, from_=8, to=512, resolution=8, orient=tk.HORIZONTAL, length=150)
+    bitrate_slider.set(128)  # Default bitrate value
+    bitrate_slider.pack(anchor="c")
+
+    # Tune low bitrates dropdown menu
+    tune_label = ttk.Label(opus_settings_frame, text="Tune low bitrates for:")
+    tune_label.pack(anchor="c", pady=5)
+    tune_var = tk.StringVar(value="Auto")  # Default selection is Auto
+    tune_options = ["Auto", "Music", "Speech"]
+    tune_dropdown = ttk.OptionMenu(opus_settings_frame, tune_var, tune_var.get(), *tune_options)
+    tune_dropdown.pack(anchor="c")
+
+    # Progress bar
+    progress_bar = ttk.Progressbar(progress_section, mode="determinate")
+    progress_bar.grid(row=0, column=0, padx=15, pady=15)
+    progress_bar.pack(fill="x",pady=5)
+
+    # Progress label
+    progress_label = ttk.Label(progress_section, text="0%")
+    progress_label.pack()
+    
+    # Time spent label
+    time_label = ttk.Label(progress_section, text="Time Spent:")
+    time_label.pack(anchor="w", pady=5)
+
+    # Time spent value label
+    time_value_label = ttk.Label(progress_section, text="")
+    time_value_label.pack(anchor="w", pady=5)
+    
+    # Convert button
     convert_button = ttk.Button(root, text="Convert", command=convert_button_click_wrapper)
-    convert_button.grid(row=3, column=0, columnspan=2, pady=10, padx=10, sticky="we")
+    convert_button.grid(row=3, column=0, columnspan=3, padx=10, pady=10, sticky="nsew")
+    
+    # endregion
+    
+    restore_config_values(config)
     
     root.mainloop()
 

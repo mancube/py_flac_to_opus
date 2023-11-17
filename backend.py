@@ -89,10 +89,17 @@ def copy_cover(input_file, output_file):
         if file.lower() == "cover.jpg":
             cover_file = os.path.join(input_dir, file)
             # Copy the cover file to the output directory
-            shutil.copy(cover_file, os.path.dirname(output_file))
+            try:
+                shutil.copy(cover_file, os.path.dirname(output_file))
+            except shutil.SameFileError:
+                pass
             return
 
-def batch_convert_folder(input_folder, output_folder, encoder_settings):
+def batch_convert_folder(input_folder, output_folder, encoder_settings, rem_src_files_var):
+    
+    # Remove source files flag
+    rem_src_files = rem_src_files_var.get()
+    
     # Extract Opus encoder settings
     bitrate_mode = encoder_settings.get("bitrate_mode")
     bitrate = int(encoder_settings.get("bitrate"))
@@ -120,6 +127,11 @@ def batch_convert_folder(input_folder, output_folder, encoder_settings):
         copy_tags(input_file, output_file)
         copy_cover(input_file, output_file)
         progress_callback()
+        if rem_src_files:
+        # Delete the input file after conversion
+            os.remove(input_file)
+        else:
+            pass
         
         def update_time_spent():
             nonlocal completed_tasks
