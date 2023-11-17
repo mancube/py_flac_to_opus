@@ -25,7 +25,7 @@ python gui.py
 From the v1.1 version onward, the icon is provided via a different method, so the icon.ico isn't needed anymore.
 
 # Screenshots
-![Imgur](https://i.imgur.com/zunc6to.png)
+![Imgur](https://i.imgur.com/1ZoipHi.png)
 
 The basic user interface, with the options to choose the input and output folders, for batch processing.
 
