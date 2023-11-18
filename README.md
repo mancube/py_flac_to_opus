@@ -1,10 +1,17 @@
+![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)![Windows](https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white)![Linux](https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black)
+
 <img src='https://i.imgur.com/Dk1BtAg.png' width='150'></img>
 # py_flac_to_opus
 Audio converter for converting FLAC to OPUS files.
 Written fully in Python, GUI done in TKinter.
 
 # Requirements
-Needs a **ffmpeg** install accessible, either via *PATH enviroment variables* or provide the **ffmpeg** executable *yourself* in the same folder as the source.
+Needs a **FFmpeg** install accessible, either via *PATH enviroment variables* or provide the **ffmpeg** executable *yourself* in the same folder as the source.
+
+Here's a link to the [FFmpeg documentation](https://github.com/FFmpeg/FFmpeg) on GitHub, containing the explanation of the installation process.
+
+# Installation
+The installation is done via the **pip** package manager.
 
 Necessary imports are listed in the requirements.txt file, can be installed via:
 ```
